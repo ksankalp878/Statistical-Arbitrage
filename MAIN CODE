@@ -1,1 +1,82 @@
+import pandas as pd
+
+from statsmodels.api import OLS, add_constant
+from statsmodels.tsa.stattools import adfuller
+
+def estimate_long_run_short_run_relationships(y, x):
+        y_t = c + gamma * x_t + z_
+        y_t - y_(t-1) = alpha * z_(t-1) + epsilon_t,
+    
+    Parameters
+    ----------
+    y : pd.Series
+    x : pd.Series
+
+    
+    Returns
+    -------
+    c : float    
+    gamma : float
+    alpha : float
+    z : pd.Series
+    assert isinstance(y, pd.Series), 'Input series y should be of type pd.Series'
+    assert isinstance(x, pd.Series), 'Input series x should be of type pd.Series'
+    assert sum(y.isnull()) == 0, 'Input series y has nan-values. Unhandled case.'
+    assert sum(x.isnull()) == 0, 'Input series x has nan-values. Unhandled case.'
+    assert y.index.equals(x.index), 'The two input series y and x do not have the same index.'
+    
+    long_run_ols = OLS(y, add_constant(x), has_const=True)
+    long_run_ols_fit = long_run_ols.fit()
+    
+    c, gamma = long_run_ols_fit.params
+    z = long_run_ols_fit.resid
+
+    short_run_ols = OLS(y.diff().iloc[1:], (z.shift().iloc[1:]))
+    short_run_ols_fit = short_run_ols.fit()
+    
+    alpha = short_run_ols_fit.params[0]
+        
+    return c, gamma, alpha, z
+
+
+def engle_granger_two_step_cointegration_test(y, x):
+    
+   for long-run relationship:
+        y_t = c + gamma * x_t + z_t
+    
+      phi=1 vs phi < 1 in
+        z_t = phi * z_(t-1) + eta_t
+        
+    If phi < 1, the z series is stationary is
+    stationary, and thus the series y and x are concluded to be cointegrated.
+
+    Parameters 
+    ----------
+    y : pd.Series
+     
+    
+    x : pd.Series
+       
+        
+    Returns
+    -------
+    dfstat : float
+    pvalue : float
+       
+    """
+    
+    assert isinstance(y, pd.Series), 'Input series y should be of type pd.Series'
+    assert isinstance(x, pd.Series), 'Input series x should be of type pd.Series'
+    assert sum(y.isnull()) == 0, 'Input series y has nan-values. Unhandled case.'
+    assert sum(x.isnull()) == 0, 'Input series x has nan-values. Unhandled case.'
+    assert y.index.equals(x.index), 'The two input series y and x do not have the same index.'
+    
+    c, gamma, alpha, z = estimate_long_run_short_run_relationships(y, x)
+    
+    adfstat, pvalue, usedlag, nobs, crit_values = adfuller(z, maxlag=1, autolag=None)
+   
+    return adfstat, pvalue
+    
+    ,BidPrice-AA,BidVolume-AA,AskPrice-AA,AskVolume-AA,BidPrice-BB,BidVolume-BB,AskPrice-BB,AskVolume-BB,BidPrice-CC,BidVolume-CC,AskPrice-CC,AskVolume-CC,BidPrice-DD,BidVolume-DD,AskPrice-DD,AskVolume-DD,BidPrice-EE,BidVolume-EE,AskPrice-EE,AskVolume-EE,BidPrice-FF,BidVolume-FF,AskPrice-FF,AskVolume-FF,BidPrice-GG,BidVolume-GG,AskPrice-GG,AskVolume-GG,BidPrice-HH,BidVolume-HH,AskPrice-HH,AskVolume-HH,BidPrice-II,BidVolume-II,AskPrice-II,AskVolume-II,BidPrice-JJ,BidVolume-JJ,AskPrice-JJ,AskVolume-JJ,BidPrice-KK,BidVolume-KK,AskPrice-KK,AskVolume-KK,BidPrice-LL,BidVolume-LL,AskPrice-LL,AskVolume-LL,BidPrice-MM,BidVolume-MM,AskPrice-MM,AskVolume-MM,BidPrice-NN,BidVolume-NN,AskPrice-NN,AskVolume-NN,BidPrice-OO,BidVolume-OO,AskPrice-OO,AskVolume-OO
+    
 
