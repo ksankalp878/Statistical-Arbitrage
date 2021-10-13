@@ -77,6 +77,98 @@ def engle_granger_two_step_cointegration_test(y, x):
    
     return adfstat, pvalue
     
-    ,BidPrice-AA,BidVolume-AA,AskPrice-AA,AskVolume-AA,BidPrice-BB,BidVolume-BB,AskPrice-BB,AskVolume-BB,BidPrice-CC,BidVolume-CC,AskPrice-CC,AskVolume-CC,BidPrice-DD,BidVolume-DD,AskPrice-DD,AskVolume-DD,BidPrice-EE,BidVolume-EE,AskPrice-EE,AskVolume-EE,BidPrice-FF,BidVolume-FF,AskPrice-FF,AskVolume-FF,BidPrice-GG,BidVolume-GG,AskPrice-GG,AskVolume-GG,BidPrice-HH,BidVolume-HH,AskPrice-HH,AskVolume-HH,BidPrice-II,BidVolume-II,AskPrice-II,AskVolume-II,BidPrice-JJ,BidVolume-JJ,AskPrice-JJ,AskVolume-JJ,BidPrice-KK,BidVolume-KK,AskPrice-KK,AskVolume-KK,BidPrice-LL,BidVolume-LL,AskPrice-LL,AskVolume-LL,BidPrice-MM,BidVolume-MM,AskPrice-MM,AskVolume-MM,BidPrice-NN,BidVolume-NN,AskPrice-NN,AskVolume-NN,BidPrice-OO,BidVolume-OO,AskPrice-OO,AskVolume-OO
+BidPrice-AA,BidVolume-AA,AskPrice-AA,AskVolume-AA,BidPrice-BB,BidVolume-BB,AskPrice-BB,AskVolume-BB,BidPrice-CC,BidVolume-CC,AskPrice-CC,AskVolume-CC,BidPrice-DD,BidVolume-DD,AskPrice-DD,AskVolume-DD,BidPrice-EE,BidVolume-EE,AskPrice-EE,AskVolume-EE,BidPrice-FF,BidVolume-FF,AskPrice-FF,AskVolume-FF,BidPrice-GG,BidVolume-GG,AskPrice-GG,AskVolume-GG,BidPrice-HH,BidVolume-HH,AskPrice-HH,AskVolume-HH,BidPrice-II,BidVolume-II,AskPrice-II,AskVolume-II,BidPrice-JJ,BidVolume-JJ,AskPrice-JJ,AskVolume-JJ,BidPrice-KK,BidVolume-KK,AskPrice-KK,AskVolume-KK,BidPrice-LL,BidVolume-LL,AskPrice-LL,AskVolume-LL,BidPrice-MM,BidVolume-MM,AskPrice-MM,AskVolume-MM,BidPrice-NN,BidVolume-NN,AskPrice-NN,AskVolume-NN,BidPrice-OO,BidVolume-OO,AskPrice-OO,AskVolume-OO
     
+------------------------------------------------------------------------------------------------
 
+from cointegration_analysis import estimate_long_run_short_run_relationships, engle_granger_two_step_cointegration_test
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+%matplotlib inline
+
+def read_data(filename):
+
+    df = pd.read_csv(filename, index_col=0)
+    df.columns = [df.columns.str[-2:], df.columns.str[:-3]]
+
+    return df
+
+market_data = read_data('Pairs Trading.csv')
+
+display(market_data.head())
+
+stock_names = list(market_data.columns.get_level_values(0).unique())
+print('The stocks available are',stock_names)
+
+market_data_segmented = market_data[:250]
+
+def bid_ask_price_plot(stock1, stock2):
+
+    ax1 = plt.subplot2grid((6, 1), (0, 0), rowspan=5, colspan=1)
+    plt.title('Bid & Ask Prices Development of the Stocks ' + stock1 + " and " + stock2)
+    plt.grid()
+
+    ax1.plot(market_data_segmented.index,
+             market_data_segmented[stock1, 'BidPrice'])
+    ax1.plot(market_data_segmented.index,
+             market_data_segmented[stock1, 'AskPrice'])
+    
+    ax1.plot(market_data_segmented.index,
+             market_data_segmented[stock2, 'BidPrice'])
+    ax1.plot(market_data_segmented.index,
+             market_data_segmented[stock2, 'AskPrice'])
+
+    
+    ax1.axes.get_xaxis().set_visible(False)
+
+    ax1.legend([stock1 + " Bid Price", stock1 + " Ask Price", stock2 + " Bid Price", stock2 + " Ask Price"], loc='upper right')
+
+def bid_ask_volume_plot(stock1, stock2):
+
+    ax2 = plt.subplot2grid((6, 1), (5, 0), rowspan=1, colspan=1)
+    plt.title('Bid & Ask Volumes Development of the Stocks ' + stock1 + " and " + stock2)
+    plt.grid()
+
+    ax2.plot(market_data_segmented.index,
+             market_data_segmented[stock1, 'BidVolume'])
+    ax2.plot(market_data_segmented.index,
+             market_data_segmented[stock1, 'AskVolume'])
+             
+              ax2.plot(market_data_segmented.index,
+             market_data_segmented[stock2, 'BidVolume'])
+    ax2.plot(market_data_segmented.index,
+             market_data_segmented[stock2, 'AskVolume'])
+
+  
+    ax2.axes.get_xaxis().set_visible(False)
+
+    ax2.legend([stock1 + " Bid Volume", stock1 + " Ask Volume", stock2 + " Bid Volume", stock2 + " Ask Volume"], loc='upper right')
+
+
+plt.figure(figsize=(15, 15))
+plt.show(bid_ask_price_plot("CC", "MM"), bid_ask_volume_plot("CC", "MM"))
+
+for stock in stock_names:
+    market_data[stock,'MidPrice'] = (market_data[stock,'BidPrice'] + market_data[stock,'AskPrice']) / 2
+    market_data = market_data.sort_index(axis=1)
+    
+market_data.head()
+
+def mid_price_check(stock):
+
+    plt.figure(figsize=(20, 5))
+    plt.plot(market_data[stock,'AskPrice'][:100])
+    plt.plot(market_data[stock,'MidPrice'][:100])
+    plt.plot(market_data[stock,'BidPrice'][:100])
+
+    plt.xticks([]) # Timestamp is not Important
+    plt.title('Ask, Bid and Mid Price Development of Stock ' + stock)
+    plt.legend(["Ask Price", "Mid Price", "Bid Price"], loc='lower left')
+    plt.show()
+    
+mid_price_check('MM')
+
+tradable_pairs_analysis = data_analysis[data_analysis['P-Value'] < 0.01].sort_values('P-Value')
+
+tradable_pairs_analysis
