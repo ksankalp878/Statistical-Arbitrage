@@ -1,174 +1,43 @@
 import pandas as pd
-
-from statsmodels.api import OLS, add_constant
-from statsmodels.tsa.stattools import adfuller
-
-def estimate_long_run_short_run_relationships(y, x):
-        y_t = c + gamma * x_t + z_
-        y_t - y_(t-1) = alpha * z_(t-1) + epsilon_t,
-    
-    Parameters
-    ----------
-    y : pd.Series
-    x : pd.Series
-
-    
-    Returns
-    -------
-    c : float    
-    gamma : float
-    alpha : float
-    z : pd.Series
-    assert isinstance(y, pd.Series), 'Input series y should be of type pd.Series'
-    assert isinstance(x, pd.Series), 'Input series x should be of type pd.Series'
-    assert sum(y.isnull()) == 0, 'Input series y has nan-values. Unhandled case.'
-    assert sum(x.isnull()) == 0, 'Input series x has nan-values. Unhandled case.'
-    assert y.index.equals(x.index), 'The two input series y and x do not have the same index.'
-    
-    long_run_ols = OLS(y, add_constant(x), has_const=True)
-    long_run_ols_fit = long_run_ols.fit()
-    
-    c, gamma = long_run_ols_fit.params
-    z = long_run_ols_fit.resid
-
-    short_run_ols = OLS(y.diff().iloc[1:], (z.shift().iloc[1:]))
-    short_run_ols_fit = short_run_ols.fit()
-    
-    alpha = short_run_ols_fit.params[0]
-        
-    return c, gamma, alpha, z
-
-
-def engle_granger_two_step_cointegration_test(y, x):
-    
-   for long-run relationship:
-        y_t = c + gamma * x_t + z_t
-    
-      phi=1 vs phi < 1 in
-        z_t = phi * z_(t-1) + eta_t
-        
-    If phi < 1, the z series is stationary is
-    stationary, and thus the series y and x are concluded to be cointegrated.
-
-    Parameters 
-    ----------
-    y : pd.Series
-     
-    
-    x : pd.Series
-       
-        
-    Returns
-    -------
-    dfstat : float
-    pvalue : float
-       
-    """
-    
-    assert isinstance(y, pd.Series), 'Input series y should be of type pd.Series'
-    assert isinstance(x, pd.Series), 'Input series x should be of type pd.Series'
-    assert sum(y.isnull()) == 0, 'Input series y has nan-values. Unhandled case.'
-    assert sum(x.isnull()) == 0, 'Input series x has nan-values. Unhandled case.'
-    assert y.index.equals(x.index), 'The two input series y and x do not have the same index.'
-    
-    c, gamma, alpha, z = estimate_long_run_short_run_relationships(y, x)
-    
-    adfstat, pvalue, usedlag, nobs, crit_values = adfuller(z, maxlag=1, autolag=None)
-   
-    return adfstat, pvalue
-    
-BidPrice-AA,BidVolume-AA,AskPrice-AA,AskVolume-AA,BidPrice-BB,BidVolume-BB,AskPrice-BB,AskVolume-BB,BidPrice-CC,BidVolume-CC,AskPrice-CC,AskVolume-CC,BidPrice-DD,BidVolume-DD,AskPrice-DD,AskVolume-DD,BidPrice-EE,BidVolume-EE,AskPrice-EE,AskVolume-EE,BidPrice-FF,BidVolume-FF,AskPrice-FF,AskVolume-FF,BidPrice-GG,BidVolume-GG,AskPrice-GG,AskVolume-GG,BidPrice-HH,BidVolume-HH,AskPrice-HH,AskVolume-HH,BidPrice-II,BidVolume-II,AskPrice-II,AskVolume-II,BidPrice-JJ,BidVolume-JJ,AskPrice-JJ,AskVolume-JJ,BidPrice-KK,BidVolume-KK,AskPrice-KK,AskVolume-KK,BidPrice-LL,BidVolume-LL,AskPrice-LL,AskVolume-LL,BidPrice-MM,BidVolume-MM,AskPrice-MM,AskVolume-MM,BidPrice-NN,BidVolume-NN,AskPrice-NN,AskVolume-NN,BidPrice-OO,BidVolume-OO,AskPrice-OO,AskVolume-OO
-    
-------------------------------------------------------------------------------------------------
-
-from cointegration_analysis import estimate_long_run_short_run_relationships, engle_granger_two_step_cointegration_test
-import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 %matplotlib inline
 
-def read_data(filename):
-
-    df = pd.read_csv(filename, index_col=0)
-    df.columns = [df.columns.str[-2:], df.columns.str[:-3]]
-
-    return df
-
-market_data = read_data('Pairs Trading.csv')
-
-display(market_data.head())
-
-stock_names = list(market_data.columns.get_level_values(0).unique())
-print('The stocks available are',stock_names)
-
-market_data_segmented = market_data[:250]
-
-def bid_ask_price_plot(stock1, stock2):
-
-    ax1 = plt.subplot2grid((6, 1), (0, 0), rowspan=5, colspan=1)
-    plt.title('Bid & Ask Prices Development of the Stocks ' + stock1 + " and " + stock2)
-    plt.grid()
-
-    ax1.plot(market_data_segmented.index,
-             market_data_segmented[stock1, 'BidPrice'])
-    ax1.plot(market_data_segmented.index,
-             market_data_segmented[stock1, 'AskPrice'])
-    
-    ax1.plot(market_data_segmented.index,
-             market_data_segmented[stock2, 'BidPrice'])
-    ax1.plot(market_data_segmented.index,
-             market_data_segmented[stock2, 'AskPrice'])
-
-    
-    ax1.axes.get_xaxis().set_visible(False)
-
-    ax1.legend([stock1 + " Bid Price", stock1 + " Ask Price", stock2 + " Bid Price", stock2 + " Ask Price"], loc='upper right')
-
-def bid_ask_volume_plot(stock1, stock2):
-
-    ax2 = plt.subplot2grid((6, 1), (5, 0), rowspan=1, colspan=1)
-    plt.title('Bid & Ask Volumes Development of the Stocks ' + stock1 + " and " + stock2)
-    plt.grid()
-
-    ax2.plot(market_data_segmented.index,
-             market_data_segmented[stock1, 'BidVolume'])
-    ax2.plot(market_data_segmented.index,
-             market_data_segmented[stock1, 'AskVolume'])
-             
-              ax2.plot(market_data_segmented.index,
-             market_data_segmented[stock2, 'BidVolume'])
-    ax2.plot(market_data_segmented.index,
-             market_data_segmented[stock2, 'AskVolume'])
-
+# data extraction from excel file
   
-    ax2.axes.get_xaxis().set_visible(False)
+df = pd.read_excel( '/Users/Sankalp/Desktop/data.xlsx')
+df.columns = df.columns.str.strip()
 
-    ax2.legend([stock1 + " Bid Volume", stock1 + " Ask Volume", stock2 + " Bid Volume", stock2 + " Ask Volume"], loc='upper right')
+print df
+
+#adds percent change for NIFTY/ other derivatives in the column + moving average
 
 
-plt.figure(figsize=(15, 15))
-plt.show(bid_ask_price_plot("CC", "MM"), bid_ask_volume_plot("CC", "MM"))
+df['NIFTY % change'] = df['NIFTY'].pct_change()
 
-for stock in stock_names:
-    market_data[stock,'MidPrice'] = (market_data[stock,'BidPrice'] + market_data[stock,'AskPrice']) / 2
-    market_data = market_data.sort_index(axis=1)
-    
-market_data.head()
+df['5 ema'] = df ['NIFTY].ewm(span=5, adjust = False).mean() 
+df['10 ema']  = df [ IWO ].ewm (span=10, adjust = False).mean()
+df['150 ema'] = df['NIFTY'].ewm (span=150, adjust = False).mean()
 
-def mid_price_check(stock):
+df = df.iloc[150: ]
 
-    plt.figure(figsize=(20, 5))
-    plt.plot(market_data[stock,'AskPrice'][:100])
-    plt.plot(market_data[stock,'MidPrice'][:100])
-    plt.plot(market_data[stock,'BidPrice'][:100])
+# Checking whether price fits in criteria to buy
 
-    plt.xticks([]) # Timestamp is not Important
-    plt.title('Ask, Bid and Mid Price Development of Stock ' + stock)
-    plt.legend(["Ask Price", "Mid Price", "Bid Price"], loc='lower left')
-    plt.show()
-    
-mid_price_check('MM')
+df['Set Criteria'] = (df['NIFTY'] > df[ 150 ema']) (df [ 15 ema' l > df['10 ema']) 
 
-tradable_pairs_analysis = data_analysis[data_analysis['P-Value'] < 0.01].sort_values('P-Value')
+df ['Set Criteria'] = np.logical_not(df['criteria' 1)
 
-tradable_pairs_analysis
+# Calculating Average yearly return 
+
+start_model = df['model' ].iloc [150]
+end model df ['model).iloc(-1]
+years = (df['model].count()+1-150)/252
+model_average_return = (end_model/start_model)** (1/years)-1 print(model yields', model_average_return-100, '& per year')
+
+#Plotting graph found + log function
+
+df ['model'].plot(grid-True, kind-'line', title='model', logy-True, figsize= (16,8)) 
+
+
+
+
